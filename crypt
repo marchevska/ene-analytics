@@ -1,0 +1,164 @@
+#!/bin/bash
+
+set -e
+cd "$(dirname "$0")"
+
+recovery_password() {
+    read -s -p "Set Recovery Password:" RECOVERY_PASSWORD
+    echo ' X'
+    read -s -p "Repeat:" RECOVERY_PASSWORD_2
+    echo ' X'
+    if [[ "$RECOVERY_PASSWORD" != "$RECOVERY_PASSWORD_2" ]]; then
+        echo "Unmatched"
+        false
+    else
+        true
+    fi
+}
+
+add_pub_key() {
+    FINGERPRINT=$(ssh-keygen -f $1 -e -m pem | openssl rsa -RSAPublicKey_in -pubout -outform DER | openssl md5 -hex | cut -f 2 -d ' ')
+    if [ -n "$FINGERPRINT" -a ! -f encrypted/keys/$FINGERPRINT.pem ]; then
+        ssh-keygen -f $1 -e -m pem | openssl rsa -RSAPublicKey_in -pubout > encrypted/keys/$FINGERPRINT.pem
+        git_add encrypted/keys/$FINGERPRINT.pem
+        echo "added key $1 $FINGERPRINT"
+    fi
+}
+
+gen_recovery_key() {
+    until recovery_password; do echo 'Try Again...'; done
+    PASS=$(echo $RECOVERY_PASSWORD | openssl sha256 -binary | openssl base64)
+    ssh-keygen -t rsa -q -f encrypted/keys/RECOVERY -b 4096 -N "$PASS"
+    ssh-keygen -f encrypted/keys/RECOVERY.pub -e -m pem | openssl rsa -RSAPublicKey_in -pubout > encrypted/keys/RECOVERY.pem
+    rm encrypted/keys/RECOVERY.pub
+    mv encrypted/keys/RECOVERY encrypted/keys/RECOVERY.rsa
+    git_add encrypted/keys/RECOVERY.pem encrypted/keys/RECOVERY.rsa
+}
+
+decrypt() {
+    FINGERPRINT=$(ssh-keygen -f ~/.ssh/id_rsa.pub -e -m pem | openssl rsa -RSAPublicKey_in -pubout -outform DER  | openssl md5 -hex | cut -f 2 -d ' ')	
+    if [ -f encrypted/keys/$FINGERPRINT.key ]; then
+        PASSCODE=$(openssl base64 -d -in encrypted/keys/$FINGERPRINT.key | openssl rsautl -decrypt -inkey ~/.ssh/id_rsa)
+        if [ -n "$PASSCODE" ]; then
+            for j in $*; do
+                jj=${j%.enc}
+                i=${jj#encrypted/}
+                if [ -f encrypted/$i.enc ]; then
+                    if ! openssl enc -d -aes-256-cbc -a -salt -md sha1 -in encrypted/$i.enc -out encrypted/$i~ -pbkdf2 -pass pass:$PASSCODE; then
+                        rm encrypted/$i~
+                        false
+                    else
+                        mv encrypted/$i~ ./$i
+                        echo "decrypted $i"
+                    fi
+                fi
+            done
+        fi
+    else
+    	echo "Your SSH public key did not participate in encryption"
+    	echo "Will try to recover..."
+    	false
+    fi
+}
+
+recover() {
+    read -s -p "Recovery Password:" RECOVERY_PASSWORD
+    echo ' X'
+    PASS=$(echo $RECOVERY_PASSWORD | openssl sha256 -binary | openssl base64)
+    PASSCODE=$(openssl base64 -d -in encrypted/keys/RECOVERY.key | openssl rsautl -decrypt -inkey encrypted/keys/RECOVERY.rsa -passin pass:$PASS)
+    if [ -n "$PASSCODE" ]; then
+    	if ! openssl enc -d -aes-256-cbc -a -salt -md sha1 -in encrypted/$1.enc -out encrypted/$1 -pbkdf2 -pass pass:$PASSCODE; then
+    	    rm encrypted/$1.yml
+    	    false
+    	fi
+    fi
+}
+
+git_add() {
+    git add $*
+}
+
+git_commit() {
+    if [ -n "$(git config user.name)" -a -n "$(git config user.email)" ]; then
+        git commit -am updated
+    else
+        echo "SUGESSION: setup git user.name and user.email variables!"
+    fi
+}
+
+passcode() {
+    if [ -z "$PASSCODE" ]; then
+        mkdir -p encrypted/keys
+        FINGERPRINT=$(ssh-keygen -f ~/.ssh/id_rsa.pub -e -m pem | openssl rsa -RSAPublicKey_in -pubout -outform DER  | openssl md5 -hex | cut -f 2 -d ' ')
+        if [ ! -f encrypted/keys/$FINGERPRINT.pem ]; then
+            ssh-keygen -f ~/.ssh/id_rsa.pub -e -m pem | openssl rsa -RSAPublicKey_in -pubout > encrypted/keys/$FINGERPRINT.pem
+            git_add encrypted/keys/$FINGERPRINT.pem
+        fi
+        if [ ! -f encrypted/keys/RECOVERY.pem ]; then
+            gen_recovery_key
+        fi
+        PASSCODE=$(openssl rand -base64 32)
+        for i in encrypted/keys/*.pem; do
+            Y=${i%.pem}.key
+            echo "$PASSCODE" | openssl rsautl -encrypt -inkey $i -pubin | openssl base64 -out $Y
+            git_add $Y
+        done
+    fi
+}
+
+encrypt() {
+    for j in $(find encrypted -name '*.enc'); do
+        jj=${j%.enc}
+        i=${jj#encrypted/}
+        if [ ! -f $i ]; then
+            rm $j
+            echo "removed $j"
+        fi
+    done
+    _f=
+    for i in $*; do
+        if [ -f $i -a ! -f encrypted/$i.enc -o $i -nt encrypted/$i.enc  ]; then
+            _f=1
+            break
+        fi
+    done
+    for i in encrypted/keys/*.pem; do
+        if [ ! -f ${i%.pem}.key ]; then
+            echo "found new key $i"
+            _f=1
+            PASSCODE=
+        fi
+    done
+    if [ -n "$_f"  ]; then
+        passcode
+        for j in $*; do
+            if [ -f $j ]; then
+                mkdir -p $(dirname encrypted/$j)
+                openssl enc -aes-256-cbc -a -salt -md sha1 -in $j -out encrypted/$j.enc -pbkdf2 -pass pass:$PASSCODE
+                git_add encrypted/$j.enc
+                echo "file $j.enc is updated"
+            fi
+        done
+        #git_commit
+    else
+        echo "nothing to encrypt for $*"
+    fi
+}
+
+case $1 in
+enc)
+    encrypt $(cat encryptlist.txt)
+    ;;
+dec)
+    decrypt `for i in $(cat encryptlist.txt); do echo encrypted/$i.enc; done`
+    ;;
+add)
+    add_pub_key $2
+    ;;
+init)
+    init
+    ;;
+*)
+    echo "use crypt [enc|dec]"
+    ;;
+esac

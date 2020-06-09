@@ -2,3 +2,4 @@
 .DS_Store
 *.db
 *.pyc
+app/creds.yaml
