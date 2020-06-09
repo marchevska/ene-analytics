@@ -1,0 +1,10 @@
+flask==1.1.2
+flask-admin>=1.5.4
+babel>=2.5
+flask-babel
+dash>=1.0
+dash-daq
+dash_bootstrap_components
+pandas>=0.25
+sqlalchemy
+PyMySQL==0.9.3
