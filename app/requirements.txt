@@ -8,3 +8,4 @@ dash_bootstrap_components
 pandas>=0.25
 sqlalchemy
 PyMySQL==0.9.3
+pyyaml

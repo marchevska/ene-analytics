@@ -10,11 +10,12 @@ import sqlalchemy as sa
 import yaml
 
 
-ene_app = Flask(__name__)
-app_path = os.path.dirname(os.path.realpath(__file__))
-ene_app.config['APPLICATION_DIR'] = app_path
+app = Flask(__name__)
+# app_path = os.path.dirname(os.path.realpath(__file__))
+# app.config['APPLICATION_DIR'] = app_path
 
-creds = yaml.load(open(f'''{app_path}/creds.yaml'''))
+#creds = yaml.load(open(f'''{app_path}/creds.yaml'''))
+creds = yaml.load(open(f'''creds.yaml'''))
 
 db_user = creds['DB'].get("DB_USER")
 db_pass = creds['DB'].get("DB_PASS")

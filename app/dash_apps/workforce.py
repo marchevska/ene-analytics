@@ -14,7 +14,7 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objs as go
 import pandas as pd
 
-from app import ene_app, db
+from app import app, db
 
 
 # Functional layout for a Dash app
@@ -31,7 +31,7 @@ def serve_dash_app_layout(*args, **kwargs):
     ])
 
 
-ene_workforce_app = Dash(__name__, server=ene_app, routes_pathname_prefix='/dash/workforce/',
+ene_workforce_app = Dash(__name__, server=app, routes_pathname_prefix='/dash/workforce/',
                          external_stylesheets=[])
 ene_workforce_app.layout = serve_dash_app_layout
 ene_workforce_app.config['suppress_callback_exceptions'] = True
