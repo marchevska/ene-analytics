@@ -10,7 +10,7 @@ from flask import Flask, render_template
 from flask_admin import Admin, AdminIndexView, BaseView, expose
 
 from app import app, db
-from dash_apps import workforce
+from dash_apps import workforce, workforce_by_region
 
 
 logger = logging.getLogger()
