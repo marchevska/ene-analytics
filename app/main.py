@@ -38,8 +38,8 @@ class EneAboutView(BaseView):
 
 
 ene_admin = Admin(app, name='ENE Analytics', index_view=EneIndexView(url='/'))
-ene_admin.add_sub_category(name="Basic Analytics", parent_name="")
-ene_admin.add_view(EneIframeApp(name='Work Force Precentage', category='Basic Analytics',
+ene_admin.add_sub_category(name="Workforce", parent_name="")
+ene_admin.add_view(EneIframeApp(name='Workforce Dynamics', category='Workforce',
                                 url='/workforce', endpoint='workforce'))
 ene_admin.add_view(EneAboutView(name='About', url='/about', endpoint='about'))
 

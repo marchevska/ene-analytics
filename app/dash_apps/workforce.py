@@ -21,12 +21,13 @@ from app import app, db
 def serve_dash_app_layout(*args, **kwargs):
     return html.Div([
         dcc.Location(id='url', refresh=False),
-        html.H1('Workforce Participation Dynamics In Population Over 15 Years'),
+        html.H1('Workforce Participation Dynamics In Population Over 15 Years',
+                style={'textAlign': 'center'}),
 
         # A fullscreen spinner is shown when the data is loaded from the database
         # So far, this is the only way to deactive interactive page contents during the long DB query
         dcc.Loading(id="loading", type='circle', fullscreen=True, style={'opacity': 0.5},
-                    children=html.Div('', id='loading_div')),
+                    children=[html.Div('', id='loading_div'), html.Div('', id='loading_div1')]),
         html.Div('', id='page_data'),
     ])
 
@@ -83,20 +84,30 @@ def generate_workforce_chart_figure(region_list=[0], age_range=[1, 12], date_ran
 
     if date_range is None:
         date_range = [0, len(q_data) - 1]
+    temp = q_data.iloc[date_range[0]:date_range[1] + 1]
     return {
         'data': [
-            {'x': q_data.quarter.iloc[date_range[0]:date_range[1] + 1],
-                'y': q_data.perc_workforce.iloc[date_range[0]:date_range[1] + 1],
-                'mode': 'lines', 'name': 'all population'},
-            {'x': q_data.quarter.iloc[date_range[0]:date_range[1] + 1],
-                'y': q_data.perc_workforce_m.iloc[date_range[0]:date_range[1] + 1],
-                'mode': 'lines', 'name': 'male'},
-            {'x': q_data.quarter.iloc[date_range[0]:date_range[1] + 1],
-                'y': q_data.perc_workforce_f.iloc[date_range[0]:date_range[1] + 1],
-                'mode': 'lines', 'name': 'female'},
+            {'x': temp.quarter, 'y': temp.perc_workforce, 'mode': 'lines', 'name': 'all population',
+                'line': {'color': 'rgb(153, 0, 102)', 'width': 4}, 'legendgroup': 'group'},
+            {'x': temp.quarter, 'y': temp.perc_workforce_m, 'mode': 'lines', 'name': 'male',
+                'line': {'color': 'rgb(0, 153, 153)', 'width': 3}, 'legendgroup': 'group1'},
+            {'x': temp.quarter, 'y': temp.perc_workforce_f, 'mode': 'lines', 'name': 'female',
+                'line': {'color': 'rgb(255, 153, 0)', 'width': 3}, 'legendgroup': 'group2'},
+            {'x': temp.quarter, 'y': [temp.perc_workforce.mean()] * len(temp), 'mode': 'lines',
+             'line': {'color': 'rgba(153, 153, 153, 0.5)', 'width': 2, 'dash': 'dot'},
+              'name': 'average', 'legendgroup': 'group3'},
+            {'x': temp.quarter, 'y': [temp.perc_workforce_m.mean()] * len(temp), 'mode': 'lines',
+             'line': {'color': 'rgba(153, 153, 153, 0.5)', 'width': 2, 'dash': 'dot'},
+              'name': 'average', 'legendgroup': 'group3', 'showlegend': False},
+            {'x': temp.quarter, 'y': [temp.perc_workforce_f.mean()] * len(temp), 'mode': 'lines',
+             'line': {'color': 'rgba(153, 153, 153, 0.5)', 'width': 2, 'dash': 'dot'},
+             'name': 'average', 'legendgroup': 'group3', 'showlegend': False},
         ],
-        'layout': {'title': f'''Region: {region_name}, age: {age_str}''',
-                   'yaxis': {'tickformat': ',.0%', 'range': [0, 1]},
+        'layout': {'title': {'text': f'''Region: {region_name}, age: {age_str}''', 'y': 0.95},
+                   'xaxis': {'showgrid': False, 'range': [-1, len(temp)]},
+                   'yaxis': {'tickformat': ',.0%', 'range': [-0.02, 1.005]},
+                   'legend': {'x': 1.01, 'y': 0.5, 'orientation': 'v'},
+                   'margin': {'t': 60}
                    }
     }
 
@@ -119,9 +130,8 @@ def display_page(*args, **kwargs):
         html.Div(
             dcc.Graph(
                 id='workforce_dynamics',
-                # figure=generate_workforce_chart_figure(src_data),
                 figure=generate_workforce_chart_figure(),
-                style={'width': '800px', 'height': '400px'}
+                style={'width': '800px', 'height': '370px'}
             ),
             style={'width': '100%', 'align-items': 'center', 'justify-content': 'center', 'display': 'flex'}
         ),
@@ -169,7 +179,7 @@ def display_page(*args, **kwargs):
 
 
 @ene_workforce_app.callback(
-    Output('workforce_dynamics', 'figure'),
+    [Output('loading_div1', 'children'), Output('workforce_dynamics', 'figure')],
     [Input('region_select', 'value'), Input('age_range', 'value'), Input('workforce_date_range', 'value')],
     [State('region_select', 'value'), State('age_range', 'value'), State('workforce_date_range', 'value')]
 
@@ -183,4 +193,4 @@ def update_workforce_chart(*args, **kwargs):
     ages = ctx.states['age_range.value']
     date_range = ctx.inputs['workforce_date_range.value']
 
-    return generate_workforce_chart_figure(regions, ages, date_range)
+    return '', generate_workforce_chart_figure(regions, ages, date_range)
