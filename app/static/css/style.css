@@ -1,0 +1,49 @@
+html {
+    font-family: sans-serif;
+}
+
+h1 {
+    margin: 10px;
+}
+
+/* iFrame for Dash apps */
+
+.fullsize_frame_container {
+    display: block;
+    overflow-y: auto;
+    overflow-x: auto;
+    // border: 1px solid #cccccc;
+    border: none;
+    height: 760px;
+    width: 100%;
+    line-height: 1em;
+}
+
+.fullsize_frame_container::-webkit-scrollbar {
+    -webkit-appearance: none;
+}
+
+/*
+.fullsize_frame::-webkit-scrollbar:vertical {
+    width: 11px;
+}
+
+.fullsize_frame::-webkit-scrollbar:horizontal {
+    height: 11px;
+}
+*/
+
+.fullsize_frame_container::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+    background-color: #eee;
+}
+
+.fullsize_frame_container::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+    border: 1px solid white;
+    background-color: rgba(0, 0, 0, .5);
+}
+
+
+

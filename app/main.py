@@ -17,6 +17,8 @@ logger = logging.getLogger()
 
 
 class EneIndexView(AdminIndexView):
+    extra_css = ['/static/css/style.css']
+
     def is_visible(self):
         return False
 
@@ -26,12 +28,16 @@ class EneIndexView(AdminIndexView):
 
 
 class EneIframeApp(BaseView):
+    extra_css = ['/static/css/style.css']
+
     @expose('/', methods=('GET',))
     def index_view(self):
         return self.render('dash_iframe_app.html')
 
 
 class EneAboutView(BaseView):
+    extra_css = ['/static/css/style.css']
+
     @expose('/', methods=('GET',))
     def index_view(self):
         return self.render('about.html')
@@ -39,7 +45,7 @@ class EneAboutView(BaseView):
 
 ene_admin = Admin(app, name='ENE Analytics', index_view=EneIndexView(url='/'))
 ene_admin.add_sub_category(name="Workforce", parent_name="")
-ene_admin.add_view(EneIframeApp(name='Workforce Dynamics', category='Workforce',
+ene_admin.add_view(EneIframeApp(name='Workforce Participation', category='Workforce',
                                 url='/workforce', endpoint='workforce'))
 ene_admin.add_view(EneAboutView(name='About', url='/about', endpoint='about'))
 

@@ -21,7 +21,7 @@ from app import app, db
 def serve_dash_app_layout(*args, **kwargs):
     return html.Div([
         dcc.Location(id='url', refresh=False),
-        html.H1('Workforce Participation Dynamics In Population Over 15 Years',
+        html.H1('Workforce Participation in Chile',
                 style={'textAlign': 'center'}),
 
         # A fullscreen spinner is shown when the data is loaded from the database
@@ -33,7 +33,7 @@ def serve_dash_app_layout(*args, **kwargs):
 
 
 ene_workforce_app = Dash(__name__, server=app, routes_pathname_prefix='/dash/workforce/',
-                         external_stylesheets=[])
+                         external_stylesheets=['/static/css/dash_style.css'])
 ene_workforce_app.layout = serve_dash_app_layout
 ene_workforce_app.config['suppress_callback_exceptions'] = True
 
@@ -85,13 +85,17 @@ def generate_workforce_chart_figure(region_list=[0], age_range=[1, 12], date_ran
     if date_range is None:
         date_range = [0, len(q_data) - 1]
     temp = q_data.iloc[date_range[0]:date_range[1] + 1]
+
+    chart_mode = 'lines' if len(temp) > 10 else 'lines+markers'
+    x_range = [-1, len(temp)] if len(temp) > 10 else [-0.5 - 0.05*len(temp), len(temp) - 0.5 + 0.05*len(temp)]
+
     return {
         'data': [
-            {'x': temp.quarter, 'y': temp.perc_workforce, 'mode': 'lines', 'name': 'all population',
+            {'x': temp.quarter, 'y': temp.perc_workforce, 'mode': chart_mode, 'name': 'all population',
                 'line': {'color': 'rgb(153, 0, 102)', 'width': 4}, 'legendgroup': 'group'},
-            {'x': temp.quarter, 'y': temp.perc_workforce_m, 'mode': 'lines', 'name': 'male',
+            {'x': temp.quarter, 'y': temp.perc_workforce_m, 'mode': chart_mode, 'name': 'male',
                 'line': {'color': 'rgb(0, 153, 153)', 'width': 3}, 'legendgroup': 'group1'},
-            {'x': temp.quarter, 'y': temp.perc_workforce_f, 'mode': 'lines', 'name': 'female',
+            {'x': temp.quarter, 'y': temp.perc_workforce_f, 'mode': chart_mode, 'name': 'female',
                 'line': {'color': 'rgb(255, 153, 0)', 'width': 3}, 'legendgroup': 'group2'},
             {'x': temp.quarter, 'y': [temp.perc_workforce.mean()] * len(temp), 'mode': 'lines',
              'line': {'color': 'rgba(153, 153, 153, 0.5)', 'width': 2, 'dash': 'dot'},
@@ -103,11 +107,11 @@ def generate_workforce_chart_figure(region_list=[0], age_range=[1, 12], date_ran
              'line': {'color': 'rgba(153, 153, 153, 0.5)', 'width': 2, 'dash': 'dot'},
              'name': 'average', 'legendgroup': 'group3', 'showlegend': False},
         ],
-        'layout': {'title': {'text': f'''Region: {region_name}, age: {age_str}''', 'y': 0.95},
+        'layout': {'title': {'text': f'''Region: {region_name}, age: {age_str}'''},
                    'xaxis': {'showgrid': False, 'range': [-1, len(temp)]},
                    'yaxis': {'tickformat': ',.0%', 'range': [-0.02, 1.005]},
                    'legend': {'x': 1.01, 'y': 0.5, 'orientation': 'v'},
-                   'margin': {'t': 60}
+                   'margin': {'t': 80}
                    }
     }
 
@@ -127,53 +131,82 @@ def display_page(*args, **kwargs):
     quarters = get_quarters()
 
     page_data_div = html.Div([
-        html.Div(
-            dcc.Graph(
-                id='workforce_dynamics',
-                figure=generate_workforce_chart_figure(),
-                style={'width': '800px', 'height': '370px'}
-            ),
-            style={'width': '100%', 'align-items': 'center', 'justify-content': 'center', 'display': 'flex'}
-        ),
-
-        html.Div(
-            html.Div(
-                dcc.RangeSlider(
-                    id='workforce_date_range',
-                    min=0,
-                    max=len(quarters) - 1,
-                    step=1,
-                    value=[0, len(quarters) - 1],
-                    marks={i: {'label': quarters[i], 'style': {'width': '30px'}}
-                           for i in set(range(0, len(quarters), 4)) | {len(quarters) - 1}},
+        html.Table([
+            html.Tr([
+                html.Td(
+                    [
+                        html.P('Workforce participation is the percentage of the population of working age '
+                        '(older than 15 years in Chile) who either have an employment or temporarily '
+                        'are unemployed.'),
+                        html.P('In general, women participation was growing during period 2010-2020, especially '
+                               'in its first half, but the gap between male and female job activity still remains '
+                               'in the majority of age ranges and geografies.'),
+                    ],
+                    style={'width': '300px'}),
+                html.Td(
+                    dcc.Graph(
+                        id='workforce_dynamics',
+                        figure=generate_workforce_chart_figure(),
+                        style={'width': '800px', 'height': '430px'}
+                    ),
+                    style={'width': '800px'}
                 ),
-                style={'width': '600px', 'height': '100px'}
-            ),
-            style={'width': '100%', 'align-items': 'center', 'justify-content': 'center', 'display': 'flex'}
-        ),
-
-        dcc.Dropdown(id='region_select',
-                     options=[{'label': value, 'value': key} for key, value in regions.items()],
-                     value='[0]',
-                     style={'width': '300px'}
-        ),
-
-        html.Div(
-            html.Div(
-                dcc.RangeSlider(
-                    id='age_range',
-                    min=1,
-                    max=12,
-                    step=1,
-                    value=[1, 12],
-                    marks={i: get_age_str(i, i) for i in range(1, 13)},
+            ]),
+            html.Tr([
+                html.Td('Region or zone:', className='label'),
+                html.Td(
+                    dcc.Dropdown(id='region_select',
+                                 options=[{'label': value, 'value': key} for key, value in regions.items()],
+                                 value='[0]',
+                                 style={'width': '300px'}
+                                 ),
+                    className='input',
                 ),
-                style={'width': '600px', 'height': '100px'}
+                ],
+                style={'height': '80px'}
             ),
-            style={'width': '100%', 'align-items': 'center', 'justify-content': 'center', 'display': 'flex'}
-        ),
-
-    ])
+            html.Tr([
+                html.Td('Age range:', className='label'),
+                html.Td(
+                    html.Div(
+                        dcc.RangeSlider(
+                            id='age_range',
+                            min=1,
+                            max=12,
+                            step=1,
+                            value=[1, 12],
+                            marks={i: get_age_str(i, i) for i in range(1, 13)},
+                        ),
+                        style={'width': '600px', 'height': '60px'}
+                    ),
+                    className='input',
+                ),
+                ],
+                style={'height': '60px'}
+            ),
+            html.Tr([
+                html.Td('Time period:', className='label'),
+                html.Td(
+                    html.Div(
+                        dcc.RangeSlider(
+                            id='workforce_date_range',
+                            min=0,
+                            max=len(quarters) - 1,
+                            step=1,
+                            value=[0, len(quarters) - 1],
+                            marks={i: {'label': quarters[i], 'style': {'width': '30px'}}
+                                   for i in set(range(0, len(quarters), 4)) | {len(quarters) - 1}},
+                        ),
+                        style={'width': '600px', 'height': '60px'}
+                    ),
+                    className='input',
+                ),
+                ],
+                style={'height': '60px'}
+            ),
+        ]),
+    ],
+    )
 
     return '', page_data_div
 
