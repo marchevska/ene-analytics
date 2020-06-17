@@ -16,12 +16,15 @@ create table ene (
 	region_15 tinyint(1) unsigned,  -- Region number on the base of 15 regions (Ref *2)
 	estrato smallint(2) unsigned,  -- Geographical stratum codes based on commune + urban/rural location (Ref *3)
 	estrato_15 smallint(2) unsigned,  -- Same as above, but based on 15 regions (Ref *4)
+	estrato_unico bigint(8), -- ?? Appears in 2020 data, undocumented values
 	tipo tinyint(1) unsigned,  -- Stratum type: city, urban, rural (Ref *5)
 	r_p_c int(4) unsigned,  -- Unique 'Region - Province - Commune' code assigned by Regional Development Subsecretary
                     -- http://www.subdere.cl/sites/default/files/documentos/articles-73111_recurso_2.pdf (Ref *6)
 	r_p_c_15 int(4) unsigned,  -- Same as above, but based on 15 regions (Ref *7)
 	id_identificacion int(4) unsigned,  -- Unique household id
 	id_directorio int(4) unsigned,  -- Unique ID for block (urban areas) or section (rural areas)
+	conglomerado bigint(8) unsigned, -- Replaces id_directorio from 2020-01
+	id_upm bigint(8) unsigned, -- Unique identifier for primary sampling unit (UPM)
 	hogar tinyint(1) unsigned,  -- Number of household inside the living place
         --
 	-- Person identification
@@ -46,7 +49,10 @@ create table ene (
 	a4 tinyint(1) unsigned,  -- Did you work for a business belonging to your family member? Y/N
 	a5 tinyint(1) unsigned,  -- If you didn't work the last week, did you have any formal employment? Y/N
 	a6 tinyint(1) unsigned,  -- What is the reason why you didn't work during the last week? (Ref *13)
+	a6_orig tinyint(1) unsigned,  -- What is the reason why you didn't work during the last week? (Ref *13) (same as a6)
 	a6_otro text,  -- Other reasons of not working, with a6='other'...
+	a6_otro_covid tinyint(1) unsigned,  -- Can the reason you didn't work be associated to COVID-19 pandemics, 1 - yes, 0 - no
+	        -- a6_otro_covid is available since 2020-03 report
 	a7 tinyint(1) unsigned,  -- During the period you're not working, are you receiving salary or profits?
 	a8 tinyint(1) unsigned,  -- In what period do you expect to get back to work? Is it less than 4 weeks? (Ref *14)
 	        -- 1 - less than 4 weeks, 2 - more than 4 weeks, 3 - don't know
@@ -91,7 +97,10 @@ create table ene (
 	b15_1 tinyint(1) unsigned,  -- Number of employees of the company (direct employee), range, country wide: (Ref *26)
 	b15_2 smallint(2) unsigned,  -- If less than 10 employees, exact number; 999 - doesn't know
 	b16 tinyint(1) unsigned,  -- The place where you worked during the last week (Ref *27), number 1 to 9
+	b16_orig tinyint(1) unsigned,  -- The place where you worked during the last week (Ref *27), number 1 to 9 (same values as b16)
 	b16_otro text,  -- Other place of work with b16=9
+	b16_otro_covid tinyint(1) unsigned,  -- Can the place of your work be associated to COVID-19 pandemics, 1 - yes, 0 - no
+	        -- b16_otro_covid is available since 2020-03 report
 	b17_mes smallint(2) unsigned,  -- Job starting month 1 to 12, 999 - unknown
 	b17_ano smallint(2) unsigned,  -- Job starting year, 9999 - unknown
 	b18_region tinyint(1) unsigned,  -- Job location, region
@@ -129,6 +138,10 @@ create table ene (
 	c7 tinyint(1) unsigned,  -- During the last week, did you work less hours than usual on your main job (whether paid or not paid)? Y/N
 	c8 smallint(2) unsigned,  -- How many hours less than usual did you work the last week on your main job? Number or 999 - don't know
 	c9 tinyint(1) unsigned,  -- What is the main reason your worked different number of hours than usual during the last week? (Ref *32)
+	c9_orig tinyint(1) unsigned,  -- What is the main reason your worked different number of hours than usual during the last week? (Ref *32) (same values as c9)
+	c9_otro text,  -- Another reason for different hours (with c9=20)
+	c9_otro_covid tinyint(1) unsigned,  -- Can the reason in c9 be associated to COVID-19 pandemics, 1 - yes, 0 - no
+	        -- c9_otro_covid is available since 2020-03 report
 	c10 tinyint(1) unsigned,  -- If depended only on you, would you work more hours than usual? Y/N
 	c11 tinyint(1) unsigned,  -- If you've been offered, would you be available to work more hours weekly? (Ref *33)
 	c12 tinyint(1) unsigned,  -- What is the reason you don't work more hours? (Ref *34)
@@ -162,10 +175,18 @@ create table ene (
 	e7 tinyint(1) unsigned,  -- What type of employment are you looking for? 1 - full time, 2 - part time, 3 - any (Ref *37)
 	e8 tinyint(1) unsigned,  -- What type of employment are you looking for? (Ref *38)
 	e9 tinyint(1) unsigned,  -- What is the reason you were not looking for a job during the last 4 weeks? (Ref *39)
+	e9_orig tinyint(1) unsigned,  -- What is the reason you were not looking for a job during the last 4 weeks? (Ref *39) (Same values as e9)
+	e9_otro text,  -- Another reason for not looking (with e9=22)
+	e9_otro_covid tinyint(1) unsigned,  -- Can the reason in e9 be associated to COVID-19 pandemics, 1 - yes, 0 - no
+	        -- e9_otro_covid is available since 2020-03 report
 	e10 tinyint(1) unsigned,  -- During the last 4 weeks, you either took steps to start your own business/self-employment,
 	        -- or reached an agreement or signed a contract to start working? Y/N
 	e11 tinyint(1) unsigned,  -- If you found a job during the last week, would you be available to start the next Monday? Y/N
 	e12 tinyint(1) unsigned,  -- Why you won't be available to start the new job the next Monday? (Ref *40)
+	e12_orig tinyint(1) unsigned,  -- Why you won't be available to start the new job the next Monday? (Ref *40) (Same values as e12)
+	e12_otro text,  -- Another reason for not looking (with e12=13)
+	e12_otro_covid tinyint(1) unsigned,  -- Can the reason in e12 be associated to COVID-19 pandemics, 1 - yes, 0 - no
+	        -- e12_otro_covid is available since 2020-03 report
 	e13 tinyint(1) unsigned,  -- Were you employed or self-employed in the past for at least 1 month (previous employment)? Y/N
 	e14_mes smallint(2) unsigned,  -- Till which month were you working in your last employment or self-employment? (1 to 12 or 999 - don't know)
 	e14_ano smallint(2) unsigned,  -- Till which year were you working in your last employment or self-employment? Year or 999 - don't know
@@ -194,6 +215,20 @@ create table ene (
 	activ tinyint(1) unsigned,  -- Activity condition: 1 - employed, 2 - unemployed, 3 - beyond workforce (Ref *47)
 	tramo_edad tinyint(1) unsigned,  -- Age range steps of 5: 1 - 15 to 19, 2 - 20 to 25, etc, 12 - 70+ years
 	fact float(4) unsigned,  -- Quarterly expansion factor
+	fact_cal float(4) unsigned,  -- Calibrated quarterly expansion factor (new)
+	b11_proxy tinyint unsigned, -- Are you being paid with a paycheck, fee slip, money receipt? Y/N (replaces b11)
+        --
+    -- Additional variables starting from 2019-12
+    mercado tinyint(1) unsigned, -- 0/1
+    s_formal tinyint(1) unsigned, -- 0/1
+    s_informal tinyint(1) unsigned, -- 0/1
+    s_hogares tinyint(1) unsigned, -- 0/1
+    ocup_proxy tinyint(1) unsigned, -- 0/1
+    o_formal tinyint(1) unsigned, -- 0/1
+    o_informal tinyint(1) unsigned, -- 0/1
+    p_ocupada tinyint(1) unsigned, -- 0/1
+    publico tinyint(1) unsigned, -- 0/1
+    privado tinyint(1) unsigned, -- 0/1
 	        --
 	foreign key (region) references ene_region(id) on delete set null,
 	foreign key (region_15) references ene_region_15(id) on delete set null,
@@ -214,6 +249,7 @@ create table ene (
 	-- foreign key (a4) references ene_yes_no(id) on delete set null,
 	-- foreign key (a5) references ene_yes_no(id) on delete set null,
 	foreign key (a6) references ene_a6(id) on delete set null,
+	foreign key (a6_orig) references ene_a6(id) on delete set null,
 	-- foreign key (a7) references ene_yes_no(id) on delete set null,
 	foreign key (a8) references ene_a8(id) on delete set null,
 	foreign key (b1) references ene_occupation(id) on delete set null,
@@ -247,6 +283,7 @@ create table ene (
 	foreign key (b14_rev4cl_caenes) references ene_economic_activity_caenes(id) on delete set null,
 	foreign key (b15_1) references ene_b15_1(id) on delete set null,
 	foreign key (b16) references ene_b16(id) on delete set null,
+	foreign key (b16_orig) references ene_b16(id) on delete set null,
 	foreign key (b18_region) references ene_region(id) on delete set null,
 	foreign key (b18_codigo) references ene_r_p_c(id) on delete set null,
 	-- foreign key (b19) references ene_yes_no(id) on delete set null,
@@ -262,6 +299,7 @@ create table ene (
 	-- foreign key (c5) references ene_yes_no(id) on delete set null,
 	-- foreign key (c7) references ene_yes_no(id) on delete set null,
 	foreign key (c9) references ene_c9(id) on delete set null,
+	foreign key (c9_orig) references ene_c9(id) on delete set null,
 	-- foreign key (c10) references ene_yes_no(id) on delete set null,
 	foreign key (c11) references ene_c11(id) on delete set null,
 	foreign key (c12) references ene_c12(id) on delete set null,
@@ -273,9 +311,11 @@ create table ene (
 	foreign key (e7) references ene_work_day(id) on delete set null,
 	foreign key (e8) references ene_e8(id) on delete set null,
 	foreign key (e9) references ene_e9(id) on delete set null,
+	foreign key (e9_orig) references ene_e9(id) on delete set null,
 	-- foreign key (e10) references ene_yes_no(id) on delete set null,
 	-- foreign key (e11) references ene_yes_no(id) on delete set null,
 	foreign key (e12) references ene_e12(id) on delete set null,
+	foreign key (e12_orig) references ene_e12(id) on delete set null,
 	-- foreign key (e13) references ene_yes_no(id) on delete set null,
 	foreign key (e16) references ene_occupation(id) on delete set null,
 	foreign key (e17) references ene_categoria_ocupacion(id) on delete set null,
@@ -289,6 +329,7 @@ create table ene (
 	foreign key (r_p_rev4cl_caenes) references ene_economic_activity_caenes(id) on delete set null,
 	foreign key (sector) references ene_sector(id) on delete set null,
 	foreign key (ocup_form) references ene_ocup_form(id) on delete set null,
+	-- foreign key (b11_proxy) references ene_yes_no(id) on delete set null,
 	foreign key (activ) references ene_activ(id) on delete set null
 )
 
