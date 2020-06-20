@@ -10,7 +10,7 @@ from flask import Flask, render_template
 from flask_admin import Admin, AdminIndexView, BaseView, expose
 
 from app import app, db
-from dash_apps import workforce, workforce_by_region
+from dash_apps import workforce, unemployment
 
 
 logger = logging.getLogger()
@@ -44,9 +44,14 @@ class EneAboutView(BaseView):
 
 
 ene_admin = Admin(app, name='ENE Analytics', index_view=EneIndexView(url='/'))
+
 ene_admin.add_sub_category(name="Workforce", parent_name="")
 ene_admin.add_view(EneIframeApp(name='Workforce Participation', category='Workforce',
                                 url='/workforce', endpoint='workforce'))
+
+ene_admin.add_sub_category(name="Unemployment", parent_name="")
+ene_admin.add_view(EneIframeApp(name='Unemployment Rate', category='Unemployment',
+                                url='/unemployment', endpoint='unemployment'))
 ene_admin.add_view(EneAboutView(name='About', url='/about', endpoint='about'))
 
 

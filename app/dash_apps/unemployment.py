@@ -1,7 +1,7 @@
 # ENE Analytics app
 # Copyright 2020 Olga Marchevska
 #
-# Dash application for workforce dynamics analysis, split by region, gender, and age
+# Dash application for unemployment dynamics analysis, split by region, gender, and age
 
 import datetime as dt
 
@@ -21,7 +21,7 @@ from app import app, db
 def serve_dash_app_layout(*args, **kwargs):
     return html.Div([
         dcc.Location(id='url', refresh=False),
-        html.H1('Workforce Participation in Chile',
+        html.H1('Unemployment Rate',
                 style={'textAlign': 'center'}),
 
         # A fullscreen spinner is shown when the data is loaded from the database
@@ -32,10 +32,10 @@ def serve_dash_app_layout(*args, **kwargs):
     ])
 
 
-ene_workforce_app = Dash(__name__, server=app, routes_pathname_prefix='/dash/workforce/',
+ene_unemployment_app = Dash(__name__, server=app, routes_pathname_prefix='/dash/unemployment/',
                          external_stylesheets=['/static/css/dash_style.css'])
-ene_workforce_app.layout = serve_dash_app_layout
-ene_workforce_app.config['suppress_callback_exceptions'] = True
+ene_unemployment_app.layout = serve_dash_app_layout
+ene_unemployment_app.config['suppress_callback_exceptions'] = True
 
 
 # -------------------------------------------------------------------------------------
@@ -61,7 +61,7 @@ def get_age_str(min_age, max_age):
         return f'''{10 + min_age * 5}-{15 + max_age * 5}'''
 
 
-def generate_workforce_chart_figure(region_list=[0], age_range=[1, 12], date_range=None):
+def generate_unemployment_chart_figure(region_list=[0], age_range=[1, 12], date_range=None):
     src_data = pd.read_csv('data/csv/agg_by_gender_age_month_region.zip').reset_index()
 
     if region_list != [0]:
@@ -71,9 +71,9 @@ def generate_workforce_chart_figure(region_list=[0], age_range=[1, 12], date_ran
     # Monthly aggregate data
     month_data = src_data.drop(['region', 'tramo_edad'], axis='columns').groupby(
         ['year', 'month']).sum().reset_index()
-    month_data['perc_workforce'] = 1.0 * month_data.is_workforce/month_data.total
-    month_data['perc_workforce_m'] = 1.0 * month_data.male_workforce/month_data.male
-    month_data['perc_workforce_f'] = 1.0 * month_data.female_workforce/month_data.female
+    month_data['perc_unemployed'] = 1.0 * month_data.unemployed/month_data.is_workforce
+    month_data['perc_unemployed_m'] = 1.0 * month_data.male_unemployed/month_data.male_workforce
+    month_data['perc_unemployed_f'] = 1.0 * month_data.female_unemployed/month_data.female_workforce
 
     # Quarterly aggregate data
     month_data['quarter'] = month_data.apply(calc_quarter, axis=1)
@@ -91,35 +91,37 @@ def generate_workforce_chart_figure(region_list=[0], age_range=[1, 12], date_ran
 
     chart_mode = 'lines' if len(temp) > 10 else 'lines+markers'
     x_range = [-1, len(temp)] if len(temp) > 10 else [-0.1*len(temp), len(temp) - 1 + 0.1*len(temp)]
+    max_unemployment_rate = max(temp.perc_unemployed.max(), temp.perc_unemployed_f.max(), temp.perc_unemployed_m.max())
+    y_range = [-0.02 * max_unemployment_rate, 1.1 * max_unemployment_rate]
 
     return {
         'data': [
-            {'x': temp.quarter, 'y': temp.perc_workforce, 'mode': chart_mode, 'name': 'all population',
+            {'x': temp.quarter, 'y': temp.perc_unemployed, 'mode': chart_mode, 'name': 'all population',
              'line': {'color': 'rgb(153, 0, 102)', 'width': 4}, 'legendgroup': 'group'},
-            {'x': temp.quarter, 'y': temp.perc_workforce_m, 'mode': chart_mode, 'name': 'male',
+            {'x': temp.quarter, 'y': temp.perc_unemployed_m, 'mode': chart_mode, 'name': 'male',
              'line': {'color': 'rgb(0, 153, 153)', 'width': 3}, 'legendgroup': 'group1'},
-            {'x': temp.quarter, 'y': temp.perc_workforce_f, 'mode': chart_mode, 'name': 'female',
+            {'x': temp.quarter, 'y': temp.perc_unemployed_f, 'mode': chart_mode, 'name': 'female',
              'line': {'color': 'rgb(255, 153, 0)', 'width': 3}, 'legendgroup': 'group2'},
-            {'x': temp.quarter, 'y': [temp.perc_workforce.mean()] * len(temp), 'mode': 'lines',
+            {'x': temp.quarter, 'y': [temp.perc_unemployed.mean()] * len(temp), 'mode': 'lines',
              'line': {'color': 'rgba(153, 153, 153, 0.5)', 'width': 2, 'dash': 'dot'},
              'name': 'average', 'legendgroup': 'group3'},
-            {'x': temp.quarter, 'y': [temp.perc_workforce_m.mean()] * len(temp), 'mode': 'lines',
+            {'x': temp.quarter, 'y': [temp.perc_unemployed_m.mean()] * len(temp), 'mode': 'lines',
              'line': {'color': 'rgba(153, 153, 153, 0.5)', 'width': 2, 'dash': 'dot'},
              'name': 'average', 'legendgroup': 'group3', 'showlegend': False},
-            {'x': temp.quarter, 'y': [temp.perc_workforce_f.mean()] * len(temp), 'mode': 'lines',
+            {'x': temp.quarter, 'y': [temp.perc_unemployed_f.mean()] * len(temp), 'mode': 'lines',
              'line': {'color': 'rgba(153, 153, 153, 0.5)', 'width': 2, 'dash': 'dot'},
              'name': 'average', 'legendgroup': 'group3', 'showlegend': False},
         ],
         'layout': {'title': {'text': f'''Region: {region_name}, age: {age_str}'''},
                    'xaxis': {'showgrid': False, 'range': x_range},
-                   'yaxis': {'tickformat': ',.0%', 'range': [-0.02, 1.005]},
+                   'yaxis': {'tickformat': ',.0%', 'range': y_range},
                    'legend': {'x': 1.01, 'y': 0.5, 'orientation': 'v'},
                    'margin': {'t': 80}
                    }
     }
 
 
-@ene_workforce_app.callback(
+@ene_unemployment_app.callback(
     [Output('loading_div', 'children'), Output('page_data', 'children')],
     [Input('url', 'pathname')],
     []
@@ -129,7 +131,7 @@ def display_page(*args, **kwargs):
     if ctx.inputs['url.pathname'] is None:
         raise dash.exceptions.PreventUpdate
 
-    # Workforce participation percentage, dynamics
+    # Unemployment rate, dynamics
     regions = dict(pd.read_csv('data/csv/regions.csv', index_col='id', squeeze=True))
     quarters = get_quarters()
 
@@ -138,18 +140,16 @@ def display_page(*args, **kwargs):
             html.Tr([
                 html.Td(
                     [
-                        html.P('Workforce participation is the percentage of the population of working age '
-                        '(older than 15 years in Chile) who either have an employment or temporarily '
-                        'are unemployed.'),
-                        html.P('In general, women participation was growing during period 2010-2020, especially '
-                               'in its first half, but the gap between male and female job activity still remains '
+                        html.P('Unemployment rate is defined as a percentage of workforce who are currently '
+                               'unemployed.'),
+                        html.P('Unemployment rate for women is higher than the one for men '
                                'in the majority of age ranges and geografies.'),
                     ],
                     style={'width': '300px'}),
                 html.Td(
                     dcc.Graph(
-                        id='workforce_dynamics',
-                        figure=generate_workforce_chart_figure(),
+                        id='unemployment_dynamics',
+                        figure=generate_unemployment_chart_figure(),
                         style={'width': '800px', 'height': '430px'}
                     ),
                     style={'width': '800px'}
@@ -192,7 +192,7 @@ def display_page(*args, **kwargs):
                 html.Td(
                     html.Div(
                         dcc.RangeSlider(
-                            id='workforce_date_range',
+                            id='unemployment_date_range',
                             min=0,
                             max=len(quarters) - 1,
                             step=1,
@@ -214,19 +214,19 @@ def display_page(*args, **kwargs):
     return '', page_data_div
 
 
-@ene_workforce_app.callback(
-    [Output('loading_div1', 'children'), Output('workforce_dynamics', 'figure')],
-    [Input('region_select', 'value'), Input('age_range', 'value'), Input('workforce_date_range', 'value')],
-    [State('region_select', 'value'), State('age_range', 'value'), State('workforce_date_range', 'value')]
+@ene_unemployment_app.callback(
+    [Output('loading_div1', 'children'), Output('unemployment_dynamics', 'figure')],
+    [Input('region_select', 'value'), Input('age_range', 'value'), Input('unemployment_date_range', 'value')],
+    [State('region_select', 'value'), State('age_range', 'value'), State('unemployment_date_range', 'value')]
 
 )
-def update_workforce_chart(*args, **kwargs):
+def update_unemployment_chart(*args, **kwargs):
     ctx = callback_context
     if len(ctx.triggered) != 1:
         raise dash.exceptions.PreventUpdate
 
     regions = eval(ctx.states['region_select.value'])
     ages = ctx.states['age_range.value']
-    date_range = ctx.inputs['workforce_date_range.value']
+    date_range = ctx.inputs['unemployment_date_range.value']
 
-    return '', generate_workforce_chart_figure(regions, ages, date_range)
+    return '', generate_unemployment_chart_figure(regions, ages, date_range)

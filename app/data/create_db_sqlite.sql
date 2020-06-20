@@ -216,7 +216,6 @@ create table ene (
     --
     -- Additional variables starting from 2019-12
     mercado tinyint(1), -- 0/1
-    sector tinyint(1), -- 0/1
     s_formal tinyint(1), -- 0/1
     s_informal tinyint(1), -- 0/1
     s_hogares tinyint(1), -- 0/1
