@@ -180,7 +180,7 @@ def display_page(*args, **kwargs):
                             value=[1, 12],
                             marks={i: get_age_str(i, i) for i in range(1, 13)},
                         ),
-                        style={'width': '600px', 'height': '60px'}
+                        style={'width': '600px', 'height': '60px', 'marginLeft': '10px'}
                     ),
                     className='input',
                 ),
@@ -200,7 +200,7 @@ def display_page(*args, **kwargs):
                             marks={i: {'label': quarters[i], 'style': {'width': '30px'}}
                                    for i in set(range(0, len(quarters), 4)) | {len(quarters) - 1}},
                         ),
-                        style={'width': '600px', 'height': '60px'}
+                        style={'width': '600px', 'height': '60px', 'marginLeft': '10px'}
                     ),
                     className='input',
                 ),
