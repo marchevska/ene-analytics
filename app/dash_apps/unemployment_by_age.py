@@ -135,16 +135,17 @@ def display_page(*args, **kwargs):
                     [
                         html.P('Unemployment rate is defined as a percentage of workforce who are currently '
                                'unemployed.'),
-                        html.P('Unemployment rate for women is higher than the one for men '
-                               'in the majority of age ranges and geografies.'),
+                        html.P('Unemployment rate is the highest for the age group 15-24 years, and is dropping '
+                               'with the age. For age group 60+ years, unemployment rate is lowest, which is '
+                               'partially due to leaving the workforce'),
                     ],
                     style={'width': '300px'}),
                 html.Td(
                     dcc.Graph(
                         id='unemployment_dynamics',
                         figure=generate_unemployment_by_age_chart_figure(),
-                        style={'width': '800px', 'height': '430px'}
-                    ),
+                        style={'width': '800px', 'height': '430px'},
+                        ),
                     style={'width': '800px'}
                 ),
             ]),
@@ -154,7 +155,7 @@ def display_page(*args, **kwargs):
                     dcc.Dropdown(id='region_select',
                                  options=[{'label': value, 'value': key} for key, value in regions.items()],
                                  value='[0]',
-                                 style={'width': '300px'}
+                                 style={'width': '300px'},
                                  ),
                     className='input',
                 ),
@@ -173,8 +174,9 @@ def display_page(*args, **kwargs):
                                 {'label': 'Female', 'value': 2},
                             ],
                             value=0,
+                            labelStyle={'marginRight': '10px'},
                         ),
-                        style={'width': '600px', 'height': '60px'}
+                        style={'width': '600px', 'height': '60px'},
                     ),
                     className='input',
                 ),
@@ -194,7 +196,7 @@ def display_page(*args, **kwargs):
                             marks={i: {'label': quarters[i], 'style': {'width': '30px'}}
                                    for i in set(range(0, len(quarters), 4)) | {len(quarters) - 1}},
                         ),
-                        style={'width': '600px', 'height': '60px'}
+                        style={'width': '600px', 'height': '60px', 'marginLeft': '20px'}
                     ),
                     className='input',
                 ),
