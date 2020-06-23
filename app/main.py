@@ -24,7 +24,8 @@ class EneIndexView(AdminIndexView):
 
     @expose('/')
     def index(self):
-        return self.render("page.html", title="Main Page")
+        return self.render('about.html')
+        # return self.render("page.html", title="Main Page")
 
 
 class EneIframeApp(BaseView):
@@ -54,7 +55,7 @@ ene_admin.add_view(EneIframeApp(name='Unemployment Rate', category='Unemployment
                                 url='/unemployment', endpoint='unemployment'))
 ene_admin.add_view(EneIframeApp(name='Unemployment By Age', category='Unemployment',
                                 url='/unemployment_by_age', endpoint='unemployment_by_age'))
-ene_admin.add_view(EneAboutView(name='About', url='/about', endpoint='about'))
+# ene_admin.add_view(EneAboutView(name='About', url='/about', endpoint='about'))
 
 
 if __name__ == "__main__":
