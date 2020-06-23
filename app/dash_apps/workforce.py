@@ -96,9 +96,9 @@ def generate_workforce_chart_figure(region_list=[0], age_range=[1, 12], date_ran
         'data': [
             {'x': temp.quarter, 'y': temp.perc_workforce, 'mode': chart_mode, 'name': 'all population',
              'line': {'color': 'rgb(153, 0, 102)', 'width': 4}, 'legendgroup': 'group'},
-            {'x': temp.quarter, 'y': temp.perc_workforce_m, 'mode': chart_mode, 'name': 'male',
+            {'x': temp.quarter, 'y': temp.perc_workforce_m, 'mode': chart_mode, 'name': 'men',
              'line': {'color': 'rgb(0, 153, 153)', 'width': 3}, 'legendgroup': 'group1'},
-            {'x': temp.quarter, 'y': temp.perc_workforce_f, 'mode': chart_mode, 'name': 'female',
+            {'x': temp.quarter, 'y': temp.perc_workforce_f, 'mode': chart_mode, 'name': 'women',
              'line': {'color': 'rgb(255, 153, 0)', 'width': 3}, 'legendgroup': 'group2'},
             {'x': temp.quarter, 'y': [temp.perc_workforce.mean()] * len(temp), 'mode': 'lines',
              'line': {'color': 'rgba(153, 153, 153, 0.5)', 'width': 2, 'dash': 'dot'},
@@ -142,7 +142,7 @@ def display_page(*args, **kwargs):
                         '(older than 15 years in Chile) who either have an employment or temporarily '
                         'are unemployed.'),
                         html.P('In general, women participation was growing during period 2010-2020, especially '
-                               'in its first half, but the gap between male and female job activity still remains '
+                               'in its first half, but the gap between men and women job activity still remains '
                                'in the majority of age ranges and geografies.'),
                     ],
                     style={'width': '300px'}),

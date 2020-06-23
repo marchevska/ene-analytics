@@ -93,7 +93,7 @@ def generate_unemployment_by_age_chart_figure(region_list=[0], gender=0, date_ra
     # Chart formatting
     regions = dict(pd.read_csv('data/csv/regions.csv', index_col='id', squeeze=True))
     region_name = regions[str(region_list).replace(' ', '')]
-    gender_str = {0: 'all population', 1: 'male', 2: 'female'}[gender]
+    gender_str = {0: 'all population', 1: 'men', 2: 'women'}[gender]
 
     chart_mode = 'lines' if len(temp) > 10 else 'lines+markers'
     x_range = [-1, len(temp)] if len(temp) > 10 else [-0.1*len(temp), len(temp) - 1 + 0.1*len(temp)]
@@ -170,8 +170,8 @@ def display_page(*args, **kwargs):
                             id='gender_select',
                             options=[
                                 {'label': 'All population', 'value': 0},
-                                {'label': 'Male', 'value': 1},
-                                {'label': 'Female', 'value': 2},
+                                {'label': 'Men', 'value': 1},
+                                {'label': 'Women', 'value': 2},
                             ],
                             value=0,
                             labelStyle={'marginRight': '10px'},

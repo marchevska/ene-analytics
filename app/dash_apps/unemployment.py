@@ -98,9 +98,9 @@ def generate_unemployment_chart_figure(region_list=[0], age_range=[1, 12], date_
         'data': [
             {'x': temp.quarter, 'y': temp.perc_unemployed, 'mode': chart_mode, 'name': 'all population',
              'line': {'color': 'rgb(153, 0, 102)', 'width': 4}, 'legendgroup': 'group'},
-            {'x': temp.quarter, 'y': temp.perc_unemployed_m, 'mode': chart_mode, 'name': 'male',
+            {'x': temp.quarter, 'y': temp.perc_unemployed_m, 'mode': chart_mode, 'name': 'men',
              'line': {'color': 'rgb(0, 153, 153)', 'width': 3}, 'legendgroup': 'group1'},
-            {'x': temp.quarter, 'y': temp.perc_unemployed_f, 'mode': chart_mode, 'name': 'female',
+            {'x': temp.quarter, 'y': temp.perc_unemployed_f, 'mode': chart_mode, 'name': 'women',
              'line': {'color': 'rgb(255, 153, 0)', 'width': 3}, 'legendgroup': 'group2'},
             {'x': temp.quarter, 'y': [temp.perc_unemployed.mean()] * len(temp), 'mode': 'lines',
              'line': {'color': 'rgba(153, 153, 153, 0.5)', 'width': 2, 'dash': 'dot'},
