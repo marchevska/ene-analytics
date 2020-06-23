@@ -112,7 +112,7 @@ def generate_unemployment_chart_figure(region_list=[0], age_range=[1, 12], date_
              'line': {'color': 'rgba(153, 153, 153, 0.5)', 'width': 2, 'dash': 'dot'},
              'name': 'average', 'legendgroup': 'group3', 'showlegend': False},
         ],
-        'layout': {'title': {'text': f'''Region: {region_name}, age: {age_str}'''},
+        'layout': {'title': {'text': f'''Unemployment rate, age: {age_str} ({region_name})'''},
                    'xaxis': {'showgrid': False, 'range': x_range},
                    'yaxis': {'tickformat': ',.0%', 'range': y_range},
                    'legend': {'x': 1.01, 'y': 0.5, 'orientation': 'v'},
